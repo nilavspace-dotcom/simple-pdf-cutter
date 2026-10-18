@@ -11,7 +11,7 @@
     <title>Simple PDF Cutter</title>
     <meta
       name="description"
-      content="Keep only the pages you need from a PDF. Works offline; your file never leaves your computer."
+      content="Keep only the pages you need from a PDF, or save the pictures inside it. Works offline; your file never leaves your computer."
     />
     <link
       rel="icon"
@@ -30,7 +30,7 @@
           </svg>
           Simple PDF Cutter
         </h1>
-        <p>Keep only the pages you need and save them as a new PDF.</p>
+        <p>Keep only the pages you need, or save the pictures from a PDF.</p>
       </header>
 
       <noscript>
@@ -58,41 +58,125 @@
         </form>
       </section>
 
-      <section class="step" aria-labelledby="step-pages">
-        <h2 id="step-pages"><span class="step-number">2</span> Pages to keep</h2>
-        <form id="cut-form">
-          <label for="pages-input" class="visually-hidden">Pages to keep</label>
-          <input
-            type="text"
-            id="pages-input"
-            placeholder="for example 12-27"
-            autocomplete="off"
-            spellcheck="false"
-            aria-describedby="pages-hint pages-summary"
-          />
-          <p id="pages-hint" class="hint">
-            Use ranges and commas, like <code>12-27</code> or <code>1-3, 8, 10-12</code>. Page 1 is
-            the first page of the file &mdash; it may differ from the numbers printed in a book.
-          </p>
-          <p id="pages-summary" class="summary" aria-live="polite"></p>
-          <button type="submit" id="cut-button" class="button primary" disabled>
+      <section class="step" aria-labelledby="step-action">
+        <h2 id="step-action"><span class="step-number">2</span> Choose what to do</h2>
+        <div class="tabs" role="tablist" aria-label="What to do">
+          <button type="button" role="tab" id="tab-cut" aria-controls="panel-cut" aria-selected="true">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <circle cx="6" cy="6" r="3" />
               <circle cx="6" cy="18" r="3" />
               <path d="M8.1 8.1 20 20M8.1 15.9 20 4" />
             </svg>
-            Cut PDF
+            Cut pages
           </button>
-        </form>
+          <button
+            type="button"
+            role="tab"
+            id="tab-images"
+            aria-controls="panel-images"
+            aria-selected="false"
+            tabindex="-1"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="16" rx="2" />
+              <circle cx="9" cy="10" r="2" />
+              <path d="m21 16-5-5-9 9" />
+            </svg>
+            Extract images
+          </button>
+        </div>
+
+        <div id="panel-cut" class="panel" role="tabpanel" aria-labelledby="tab-cut">
+          <form id="cut-form">
+            <label for="pages-input" class="field-label">Pages to keep</label>
+            <input
+              type="text"
+              id="pages-input"
+              placeholder="for example 12-27"
+              autocomplete="off"
+              spellcheck="false"
+              aria-describedby="pages-hint pages-summary"
+            />
+            <p id="pages-hint" class="hint">
+              Use ranges and commas, like <code>12-27</code> or <code>1-3, 8, 10-12</code>. Page 1 is
+              the first page of the file &mdash; it may differ from the numbers printed in a book.
+            </p>
+            <p id="pages-summary" class="summary" aria-live="polite"></p>
+            <button type="submit" id="cut-button" class="button primary" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="6" cy="6" r="3" />
+                <circle cx="6" cy="18" r="3" />
+                <path d="M8.1 8.1 20 20M8.1 15.9 20 4" />
+              </svg>
+              Cut PDF
+            </button>
+          </form>
+
+          <section id="result" class="message success" aria-labelledby="result-text" hidden>
+            <p id="result-text"></p>
+            <a id="download-link" class="button primary download" href="#">Download</a>
+          </section>
+        </div>
+
+        <div id="panel-images" class="panel" role="tabpanel" aria-labelledby="tab-images" hidden>
+          <form id="images-form">
+            <fieldset class="choices">
+              <legend class="visually-hidden">Pages to search</legend>
+              <label class="choice">
+                <input type="radio" name="image-pages" id="image-pages-all" value="all" checked />
+                All pages
+              </label>
+              <label class="choice">
+                <input type="radio" name="image-pages" id="image-pages-some" value="some" />
+                Only these pages:
+              </label>
+              <input
+                type="text"
+                id="image-pages-input"
+                placeholder="for example 12-27"
+                aria-label="Pages to search"
+                autocomplete="off"
+                spellcheck="false"
+              />
+            </fieldset>
+            <button type="submit" id="find-button" class="button primary" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-4-4" />
+              </svg>
+              Find images
+            </button>
+          </form>
+
+          <div id="gallery-area" hidden>
+            <div class="gallery-toolbar">
+              <p id="gallery-summary" class="summary" aria-live="polite"></p>
+              <div class="gallery-actions">
+                <button type="button" id="select-all" class="button small">Select all</button>
+                <button type="button" id="select-none" class="button small">Select none</button>
+                <label class="toggle" id="show-small-toggle">
+                  <input type="checkbox" id="show-small" />
+                  <span id="show-small-label">Show small images</span>
+                </label>
+              </div>
+            </div>
+            <ul id="gallery" class="gallery" aria-label="Images found"></ul>
+            <button type="button" id="zip-button" class="button primary">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 4v12m0 0-4.5-4.5M12 16l4.5-4.5M4 18v1a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1" />
+              </svg>
+              <span id="zip-button-label">Save as ZIP</span>
+            </button>
+            <section id="zip-result" class="message success" aria-labelledby="zip-result-text" hidden>
+              <p id="zip-result-text"></p>
+              <a id="zip-link" class="button primary download" href="#">Download</a>
+            </section>
+          </div>
+        </div>
       </section>
 
       <p id="status" class="status" role="status" aria-live="polite"></p>
       <p id="error" class="message error" role="alert" hidden></p>
-
-      <section id="result" class="message success" aria-labelledby="result-text" hidden>
-        <p id="result-text"></p>
-        <a id="download-link" class="button primary download" href="#">Download</a>
-      </section>
     </main>
 
     <footer class="footer">
@@ -101,6 +185,10 @@
 
     <script src="vendor/pdf-lib/pdf-lib.min.js"></script>
     <script src="src/pdf-cutter.js"></script>
+    <script src="src/formats.js"></script>
+    <script src="src/decoders.js"></script>
+    <script src="src/pdf-images.js"></script>
+    <script src="src/image-panel.js"></script>
     <script src="src/app.js"></script>
   </body>
 </html>

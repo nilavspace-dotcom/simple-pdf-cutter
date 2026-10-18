@@ -1,6 +1,7 @@
 /*
- * Simple PDF Cutter - the web page. Everything happens in the browser;
- * the PDF handling itself lives in pdf-cutter.js.
+ * Simple PDF Cutter - the web page. Everything happens in the browser; the
+ * PDF handling itself lives in pdf-cutter.js and pdf-images.js, and the
+ * "Extract images" tab in image-panel.js.
  */
 (function () {
   'use strict';
@@ -12,6 +13,8 @@
     fileInfo: $('file-info'),
     passwordForm: $('password-form'),
     passwordInput: $('password-input'),
+    tabs: [$('tab-cut'), $('tab-images')],
+    findButton: $('find-button'),
     cutForm: $('cut-form'),
     pagesInput: $('pages-input'),
     pagesSummary: $('pages-summary'),
@@ -41,6 +44,54 @@
     busy: false,
     downloadUrl: null,
   };
+
+  const imagePanel =
+    window.PdfImages && window.PdfCutterImagePanel
+      ? window.PdfCutterImagePanel.create({
+          getPdf: () => state.pdf,
+          getFileName: () => (state.file ? state.file.name : ''),
+          setBusy,
+          report,
+          showError,
+          clearError,
+          formatSize,
+        })
+      : null;
+  if (!imagePanel) ui.tabs[1].hidden = true;
+
+  // ---- Tabs ------------------------------------------------------------------
+
+  for (const tab of ui.tabs) {
+    tab.addEventListener('click', () => selectTab(tab));
+    tab.addEventListener('keydown', (event) => {
+      const shown = ui.tabs.filter((candidate) => !candidate.hidden);
+      const index = shown.indexOf(tab);
+      const next = {
+        ArrowRight: shown[(index + 1) % shown.length],
+        ArrowLeft: shown[(index - 1 + shown.length) % shown.length],
+        Home: shown[0],
+        End: shown[shown.length - 1],
+      }[event.key];
+      if (!next) return;
+      event.preventDefault();
+      selectTab(next);
+      next.focus();
+    });
+  }
+
+  function selectTab(selected) {
+    for (const tab of ui.tabs) {
+      const isSelected = tab === selected;
+      tab.setAttribute('aria-selected', String(isSelected));
+      tab.tabIndex = isSelected ? 0 : -1;
+      $(tab.getAttribute('aria-controls')).hidden = !isSelected;
+    }
+    clearError();
+  }
+
+  function imagesTabSelected() {
+    return ui.tabs[1].getAttribute('aria-selected') === 'true';
+  }
 
   // ---- Choosing a file -----------------------------------------------------
 
@@ -123,7 +174,8 @@
       ui.passwordInput.value = '';
       showFileInfo();
       updateSummary();
-      ui.pagesInput.focus();
+      if (imagesTabSelected()) ui.findButton.focus();
+      else ui.pagesInput.focus();
     }
   }
 
@@ -145,6 +197,7 @@
     clearResult();
     clearError();
     updateSummary();
+    if (imagePanel) imagePanel.reset();
   }
 
   // ---- Choosing pages and cutting ------------------------------------------
@@ -226,6 +279,7 @@
     ui.passwordInput.disabled = state.busy;
     ui.pagesInput.disabled = state.busy;
     ui.cutButton.disabled = state.busy || !state.pdf;
+    if (imagePanel) imagePanel.setBusy(state.busy);
   }
 
   function report(error) {

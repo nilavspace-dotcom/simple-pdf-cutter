@@ -8,13 +8,13 @@
 
 const fs = require('node:fs/promises');
 const path = require('node:path');
-const { parseArgs } = require('node:util');
 const {
   openPdf,
   parsePageSelection,
   extractPages,
   suggestOutputName,
 } = require('../src/pdf-cutter.js');
+const { UsageError, parseCommandLine, readInput, runCommand } = require('./common.js');
 const { version } = require('../package.json');
 
 const USAGE = `Usage: pdf-cut <input.pdf> <pages> [options]
@@ -33,26 +33,14 @@ Options:
   -v, --version            show the version number
 `;
 
-class UsageError extends Error {}
-
 async function main(args) {
-  let options;
-  try {
-    options = parseArgs({
-      args,
-      allowPositionals: true,
-      options: {
-        output: { type: 'string', short: 'o' },
-        password: { type: 'string', short: 'p' },
-        force: { type: 'boolean', short: 'f' },
-        help: { type: 'boolean', short: 'h' },
-        version: { type: 'boolean', short: 'v' },
-      },
-    });
-  } catch (error) {
-    throw new UsageError(error.message);
-  }
-  const { values, positionals } = options;
+  const { values, positionals } = parseCommandLine(args, {
+    output: { type: 'string', short: 'o' },
+    password: { type: 'string', short: 'p' },
+    force: { type: 'boolean', short: 'f' },
+    help: { type: 'boolean', short: 'h' },
+    version: { type: 'boolean', short: 'v' },
+  });
 
   if (values.help) {
     process.stdout.write(USAGE);
@@ -99,30 +87,4 @@ async function main(args) {
   );
 }
 
-async function readInput(inputPath) {
-  try {
-    return await fs.readFile(inputPath);
-  } catch (error) {
-    const reasons = {
-      ENOENT: `"${inputPath}" was not found.`,
-      EISDIR: `"${inputPath}" is a folder, not a PDF file.`,
-    };
-    const message = reasons[error.code] || `Could not read "${inputPath}": ${error.message}`;
-    throw new Error(message, { cause: error });
-  }
-}
-
-main(process.argv.slice(2)).catch((error) => {
-  if (error instanceof UsageError) {
-    console.error(`pdf-cut: ${error.message}\n`);
-    console.error(USAGE);
-    process.exitCode = 2;
-    return;
-  }
-  const message =
-    error.code === 'PASSWORD_REQUIRED'
-      ? 'This PDF is locked with a password. Add --password <text> to open it.'
-      : error.message;
-  console.error(`pdf-cut: ${message}`);
-  process.exitCode = 1;
-});
+runCommand('pdf-cut', USAGE, main);

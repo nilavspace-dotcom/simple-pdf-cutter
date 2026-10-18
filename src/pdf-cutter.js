@@ -11,7 +11,7 @@
   } else {
     root.PdfCutter = factory(root.PDFLib);
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (PDFLib) {
+})(globalThis, function (PDFLib) {
   'use strict';
 
   const {
@@ -167,16 +167,21 @@
    * @returns {string}
    */
   function suggestOutputName(inputName, label) {
-    const base =
+    let suffix = 'selected_pages';
+    if (/^\d+$/.test(label)) suffix = `page_${label}`;
+    else if (label.length <= 40) suffix = `pages_${label}`;
+    return `${fileBaseName(inputName)}_${suffix}.pdf`;
+  }
+
+  /** The name of a file without its folder and ".pdf", e.g. "/docs/book.pdf" -> "book". */
+  function fileBaseName(inputName) {
+    return (
       String(inputName || '')
         .split(/[\\/]/)
         .pop()
         .replace(/\.pdf$/i, '')
-        .trim() || 'document';
-    let suffix = 'selected_pages';
-    if (/^\d+$/.test(label)) suffix = `page_${label}`;
-    else if (label.length <= 40) suffix = `pages_${label}`;
-    return `${base}_${suffix}.pdf`;
+        .trim() || 'document'
+    );
   }
 
   function pluralize(count, noun) {
@@ -587,6 +592,7 @@
     PdfCutterError,
     parsePageSelection,
     suggestOutputName,
+    fileBaseName,
     openPdf,
     extractPages,
   };

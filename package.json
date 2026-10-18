@@ -1,10 +1,11 @@
 {
   "name": "simple-pdf-cutter",
-  "version": "1.0.0",
-  "description": "Keep only the pages you need from a PDF - in your browser (offline, nothing uploaded) or from the command line.",
+  "version": "1.1.0",
+  "description": "Keep only the pages you need from a PDF, or save the images inside it - in your browser (offline, nothing uploaded) or from the command line.",
   "private": true,
   "bin": {
-    "pdf-cut": "bin/pdf-cut.js"
+    "pdf-cut": "bin/pdf-cut.js",
+    "pdf-images": "bin/pdf-images.js"
   },
   "scripts": {
     "test": "node --test \"test/unit/*.test.js\"",

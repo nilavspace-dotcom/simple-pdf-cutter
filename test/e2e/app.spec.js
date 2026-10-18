@@ -2,42 +2,17 @@
 'use strict';
 
 const fs = require('node:fs');
-const path = require('node:path');
-const { pathToFileURL } = require('node:url');
 const { test, expect } = require('@playwright/test');
 const { makeNumberedPdf, originalPageNumbers, fixturePath } = require('../helpers.js');
-
-// Opened straight from disk, the way someone double-clicks index.html.
-const APP_URL = pathToFileURL(path.join(__dirname, '..', '..', 'index.html')).href;
+const { openApp, download: downloadFrom } = require('./app-page.js');
 
 let book;
 test.beforeAll(async () => {
   book = Buffer.from(await makeNumberedPdf(30));
 });
 
-/**
- * Opens the page and collects anything that would mean it is broken or not
- * as private as promised: script errors and requests to the outside world.
- */
-async function openApp(page) {
-  const problems = [];
-  page.on('pageerror', (error) => problems.push(`page error: ${error.message}`));
-  page.on('console', (message) => {
-    if (message.type() === 'error') problems.push(`console error: ${message.text()}`);
-  });
-  page.on('request', (request) => {
-    if (!/^(file|blob|data):/.test(request.url()))
-      problems.push(`network request: ${request.url()}`);
-  });
-  await page.goto(APP_URL);
-  return problems;
-}
-
-async function download(page, linkName) {
-  const downloading = page.waitForEvent('download');
-  await page.getByRole('link', { name: linkName }).click();
-  const file = await downloading;
-  return { name: file.suggestedFilename(), bytes: fs.readFileSync(await file.path()) };
+function download(page, linkName) {
+  return downloadFrom(page, page.getByRole('link', { name: linkName }));
 }
 
 const range = (first, last) => Array.from({ length: last - first + 1 }, (_, i) => first + i);
