@@ -1,0 +1,20 @@
+{
+  "name": "simple-pdf-cutter",
+  "version": "1.0.0",
+  "description": "Keep only the pages you need from a PDF - in your browser (offline, nothing uploaded) or from the command line.",
+  "private": true,
+  "bin": {
+    "pdf-cut": "bin/pdf-cut.js"
+  },
+  "scripts": {
+    "test": "node --test \"test/unit/*.test.js\"",
+    "test:e2e": "playwright test",
+    "test:all": "npm test && npm run test:e2e"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1"
+  }
+}

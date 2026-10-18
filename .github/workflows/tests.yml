@@ -1,0 +1,47 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    name: Unit and command-line tests (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+      # The tests use qpdf, when it is installed, to double-check every PDF they produce.
+      - name: Install qpdf
+        run: sudo apt-get update && sudo apt-get install --yes qpdf
+      - run: npm test
+
+  browser:
+    name: Browser tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - name: Keep traces of failed tests
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-traces
+          path: test-results/
+          retention-days: 7
